@@ -1,0 +1,175 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+'''
+__author__ = '王益夫'
+__mtime__ = '2019/12/20'
+'''
+'''
+版本修改：
+V 1.0:用来获取文件的链接和信息，并存储在txt文件中；
+V 1.0.1：参照调整headers
+'''
+
+
+#import 相关的库
+import requests
+from bs4 import BeautifulSoup
+import io
+import sys
+import re
+import os
+import time
+import random
+import logging
+
+
+#方法1：设置文件写入，不设置输出控制台
+# LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
+# DATE_FORMAT = "%m/%d/%Y %H:%M:%S %p"
+# logging.basicConfig(filename='./temp/CCTV_news.log', level=logging.info, format=LOG_FORMAT, datefmt=DATE_FORMAT)
+
+#方法2：handler同时输出到控制台和文件
+logger = logging.getLogger()
+logger.setLevel('ERROR')
+BASIC_FORMAT = "%(asctime)s:%(levelname)s:%(message)s"
+DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
+formatter = logging.Formatter(BASIC_FORMAT, DATE_FORMAT)
+chlr = logging.StreamHandler() # 输出到控制台的handler
+chlr.setFormatter(formatter)
+chlr.setLevel('ERROR')  # 也可以不设置，不设置就默认用logger的level
+fhlr = logging.FileHandler('./temp/CCTV_news.log') # 输出到文件的handler
+fhlr.setFormatter(formatter)
+logger.addHandler(chlr)
+logger.addHandler(fhlr)
+
+#增加多个浏览器头，避免检测
+headers_list = [
+    "Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.153 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:30.0) Gecko/20100101 Firefox/30.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.75.14 (KHTML, like Gecko) Version/7.0.3 Safari/537.75.14",
+    "Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; Win64; x64; Trident/6.0)",
+    'Mozilla/5.0 (Windows; U; Windows NT 5.1; it; rv:1.8.1.11) Gecko/20071127 Firefox/2.0.0.11',
+    'Opera/9.25 (Windows NT 5.1; U; en)',
+    'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 1.1.4322; .NET CLR 2.0.50727)',
+    'Mozilla/5.0 (compatible; Konqueror/3.5; Linux) KHTML/3.5.5 (like Gecko) (Kubuntu)',
+    'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.8.0.12) Gecko/20070731 Ubuntu/dapper-security Firefox/1.5.0.12',
+    'Lynx/2.8.5rel.1 libwww-FM/2.14 SSL-MM/1.4.1 GNUTLS/1.2.9',
+    "Mozilla/5.0 (X11; Linux i686) AppleWebKit/535.7 (KHTML, like Gecko) Ubuntu/11.04 Chromium/16.0.912.77 Chrome/16.0.912.77 Safari/535.7",
+    "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:10.0) Gecko/20100101 Firefox/10.0",
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36'
+]
+
+global headers
+headers = {'User-Agent': random.choice(headers_list)}
+
+def getRespose(url):
+    '''requests获取response文本'''
+    global headers
+    try:
+        r = requests.get(url, headers=headers, timeout=30)
+        r.raise_for_status()
+        r.encoding = r.apparent_encoding
+        return r.text
+    except Exception as e:
+        #print('链接异常：'+ url)
+        logging.error('链接异常：%s', url)
+        raise e
+
+
+def getNowUrls(url,mode=1):
+    '''解析列表文章的链接和文章名'''
+    URL_all_set = set()
+    URL_next_page_set = set()
+    soup = BeautifulSoup(getRespose(url), 'html.parser')
+    if mode == 1 :
+        try:
+            for line in soup.body.find(class_='xwlist').find_all(name = 'a'):
+                url_point = line.attrs['href']
+                logging.warning('采集列表链接：%s', url_point)
+                if url_point not in URL_all_set:
+                    URL_all_set.add(url_point)
+            return URL_all_set
+        except Exception as e:
+            raise e
+            logging.error('采集列表链接失败：%s', url)
+            return False
+
+    else:
+        try:
+            url_next = soup.body.find(class_='page now-page').next_sibling.next_sibling.attrs['href']
+            if url_next not in URL_next_page_set:
+                URL_next_page_set.add(url_next)
+                return URL_next_page_set
+            else:
+                #print('链接: ' + str(url_next) + '已存在！')
+                logging.warning('链接已存在：%s',url_next)
+                return False
+        except:
+            #print('获取下一页地址失败,Url_next')
+            logging.error('获取下一页链接失败：%s', url)
+            return False
+
+
+def gettext(url):
+    try:
+        demo = getRespose(url)
+        soup_text = BeautifulSoup(demo, 'html.parser')
+
+        Text_title = soup_text.head.title.string
+        Text_text = soup_text.body.find(attrs={'class':'text_content'}).p.string
+
+        logging.warning('新闻解析成功：%s,文本内容为%s  |  %s', url, Text_title, Text_text)
+
+        return Text_title, Text_text
+    except:
+        #print('新闻页面解析失败！')
+        logging.error('新闻页面解析失败： %s',url)
+        return False
+
+
+def TextWriter(url, file_path=r'.\temp', file_name=r'新闻联播.txt'):
+    file_all = file_path + '\\' + file_name
+    if  gettext(url):
+        Get_text_list = gettext(url)
+    if not os.path.exists(file_path):  # os库判断路径是否存在
+        os.mkdir(file_path)  # 不存在创建路径
+    try:
+        with open(file_all, r'a+', encoding="utf8") as f:
+            f.write(Get_text_list[0] + '\n')
+            f.write(str(Get_text_list[1]) + '\n')  # 此处写入失败的原因为该文本为list格式，需要转化为str
+            f.flush()  # 将缓存写入
+            f.close()
+            #print('文件写入成功')
+            logging.warning('文件写入成功：%s', url)
+    except:
+        #print('文本写入失败')
+        logging.error('文件写入失败：%s', url)
+        return False
+
+
+
+
+def main(url):
+    URL_all = getNowUrls(url,1)
+    URL_next_page = getNowUrls(url,2)
+    for url_line in list(URL_all):
+        time.sleep(random.random())
+        TextWriter(url_line, file_path=r'.\temp', file_name=r'新闻联播.txt')
+        URL_all.remove(url_line)   #集合为空会报错的问题。
+        # print('采集列表:',URL_all)
+        # print('下一页:' , URL_next_page)
+        logging.warning('采集列表：%s', URL_all)
+        logging.warning('下一页：%s', URL_next_page)
+        if len(URL_all) == 0 and len(URL_next_page) == 1:
+            Next_url = list(URL_next_page)[0]
+            URL_next_page.remove(Next_url)
+            time.sleep(5)
+            main(Next_url)
+
+
+if __name__ == '__main__':
+    url = r'http://www.xwlb.top/xwlb.html'
+    logging.warning("输入的url为：%s", url)
+    main(url)
+
