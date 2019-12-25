@@ -88,7 +88,7 @@ def getNowUrls(url,mode=1):
         try:
             for line in soup.body.find(class_='xwlist').find_all(name='a'):
                 url_point = line.attrs['href']
-                logging.warning('采集列表链接：%s', url_point)
+                #logging.warning('采集列表链接：%s', url_point)
                 if url_point not in URL_all_set:
                     URL_all_set.add(url_point)
             return URL_all_set
@@ -150,27 +150,28 @@ def TextWriter(url_title, url_text, file_path=r'.\temp', file_name=r'新闻联�
 def main(url):
     URL_all = getNowUrls(url, 1)
     URL_next_page = getNowUrls(url, 2)
-    logging.warning('采集列表：%s', URL_all)
-    logging.warning('下一页：%s', URL_next_page)
+    # logging.warning('采集列表：%s', URL_all)
+    # logging.warning('下一页：%s', URL_next_page)
     All_List = set()
-    All_Next_List = set()
     for url_line in list(URL_all):
         time.sleep(random.random())
-        if gettext(url_line):
-            url_title = gettext(url_line)[0]
-            url_text = str(gettext(url_line)[1])
+        Get_Text = gettext(url_line)
+        if Get_Text:
+            url_title = Get_Text[0]
+            url_text = str(Get_Text[1])
+            print(url_title,url_text)
             #logging.warning('采集中的文本：%s  |   %s', url_title, url_text)
-            TextWriter(url_title, url_text)
+            TextWriter(url_title, url_text, file_path=r'.\temp', file_name=r'新闻联播.txt')
         URL_all.remove(url_line)
         All_List.add(url_line)
     if 'end' in URL_next_page:
         logging.error('已到末页：%s', url_line)
+        logging.error('采集结束，共采集页面： %s', len(All_List))
         sys.exit()
     else:
         if len(URL_all) == 0 and len(URL_next_page) == 1:
             Next_url = list(URL_next_page)[0]
             URL_next_page.remove(Next_url)
-            All_Next_List.add(Next_url)
             time.sleep(5)
             main(Next_url)
 
