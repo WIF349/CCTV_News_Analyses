@@ -67,6 +67,7 @@ headers = {'User-Agent': random.choice(headers_list)}
 
 def getRespose(url):
     '''requests获取response文本'''
+    global ERR_List
     global headers
     try:
         r = requests.get(url, headers=headers, timeout=30)
@@ -76,11 +77,13 @@ def getRespose(url):
     except Exception as e:
         #print('链接异常：'+ url)
         logging.error('链接异常：%s', url)
+        ERR_List.add(url)
         raise e
 
 
 def getNowUrls(url,mode=1):
-    '''解析列表文章的链接和文章名'''
+    global ERR_List
+    ''' 解析列表文章的链接和文章名 '''
     URL_all_set = set()
     URL_next_page_set = set()
     soup = BeautifulSoup(getRespose(url), 'html.parser')
@@ -95,6 +98,7 @@ def getNowUrls(url,mode=1):
         except Exception as e:
             raise e
             logging.error('采集列表链接失败：%s', url)
+            ERR_List.add(url)
             return False
 
     else:
@@ -113,19 +117,25 @@ def getNowUrls(url,mode=1):
 
         except:
             logging.error('获取下一页链接失败：%s', url)
+            ERR_List.add(url)
             return False
 
 
 def gettext(url):
+    global ERR_List
     try:
         demo = getRespose(url)
         soup_text = BeautifulSoup(demo, 'html.parser')
         Text_title = soup_text.head.title.string
-        Text_text = soup_text.body.find(attrs={'class':'text_content'}).p.string
+        Text_text = soup_text.body.find(attrs={'class': 'text_content'}).p.string
         logging.warning('新闻解析成功：%s', url)
-        return Text_title, Text_text
+        if len(Text_title) != 0 or len(Text_text) !=0 :
+            return Text_title, Text_text
+        else:
+            logging.error('标题或正文解析失败： %s', url)
     except:
-        logging.error('新闻页面解析失败： %s',url)
+        logging.error('新闻页面解析失败： %s', url)
+        ERR_List.add(url)
         return False
 
 
@@ -148,11 +158,11 @@ def TextWriter(url_title, url_text, file_path=r'.\temp', file_name=r'新闻联�
 
 
 def main(url):
+    global All_List
     URL_all = getNowUrls(url, 1)
     URL_next_page = getNowUrls(url, 2)
     # logging.warning('采集列表：%s', URL_all)
     # logging.warning('下一页：%s', URL_next_page)
-    All_List = set()
     for url_line in list(URL_all):
         time.sleep(random.random())
         Get_Text = gettext(url_line)
@@ -176,11 +186,11 @@ def main(url):
             main(Next_url)
 
 
-
-
 if __name__ == '__main__':
-    #url = r'http://www.xwlb.top/xwlb.html'
-    url = r'http://www.xwlb.top/xwlb_709.html'
+    url = r'http://www.xwlb.top/xwlb.html'
+    All_List = set()
+    ERR_List = set()
+    #url = r'http://www.xwlb.top/xwlb_709.html'
     logging.warning("输入的url为：%s", url)
     main(url)
 
