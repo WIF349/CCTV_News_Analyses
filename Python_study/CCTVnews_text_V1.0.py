@@ -15,9 +15,8 @@ import sys
 import re
 import os
 import time
-#sys.stdout = io.TextIOWrapper(sys.stdout.buffer,encoding='gb18030')
-#改变标准输出的默认编码，修改如下报错信息
-#UnicodeEncodeError: 'gbk' codec can't encode character '\u2039' in position 9064: illegal multibyte sequence
+import logging
+
 
 
 def getRespose(url):
@@ -40,29 +39,29 @@ def getNowUrls(url,mode=1):
     URL_next_page_set = set()
     soup = BeautifulSoup(getRespose(url), 'html.parser')
     if mode == 1 :
-        #try:
-        for line in soup.body.find(class_='xwlist').find_all(name = 'a'):
-            url_point = line.attrs['href']
-            #print(url_point)
-            #print(URL_all)
-            if url_point not in URL_all_set:
-                URL_all_set.add(url_point)
-        return URL_all_set
-        # except:
-        #     print('页面url获取失败,Urls_list')
-        #     return False
-    else:
-        # try:
-        url_next = soup.body.find(class_='page now-page').next_sibling.next_sibling.attrs['href']
-        if url_next not in URL_next_page_set:
-            URL_next_page_set.add(url_next)
-            return URL_next_page_set
-        else:
-            print('链接: ' + url_next + '已存在！')
+        try:
+            for line in soup.body.find(class_='xwlist').find_all(name = 'a'):
+                url_point = line.attrs['href']
+                #print(url_point)
+                #print(URL_all)
+                if url_point not in URL_all_set:
+                    URL_all_set.add(url_point)
+            return URL_all_set
+        except:
+            print('页面url获取失败,Urls_list')
             return False
-        # except:
-        #     print('获取下一页地址失败,Url_next')
-        #     return False
+    else:
+        try:
+            url_next = soup.body.find(class_='page now-page').next_sibling.next_sibling.attrs['href']
+            if url_next not in URL_next_page_set:
+                URL_next_page_set.add(url_next)
+                return URL_next_page_set
+            else:
+                print('链接: ' + url_next + '已存在！')
+                return False
+        except:
+            print('获取下一页地址失败,Url_next')
+            return False
 
 
 def gettext(url):
@@ -100,9 +99,9 @@ def main(url):
     URL_next_page = getNowUrls(url,2)
     for url_line in list(URL_all):
         TextWriter(url_line, file_path=r'.\temp', file_name=r'新闻联播.txt')
-        URL_all.remove(url_line)   #集合为空会报错的问题。
-        print('采集列表:',URL_all)
-        print('下一页:' , URL_next_page)
+        URL_all.remove(url_line)
+        # print('采集列表:',URL_all)
+        # print('下一页:' , URL_next_page)
         if len(URL_all) == 0 and len(URL_next_page) == 1:
             Next_url = list(URL_next_page)[0]
             URL_next_page.remove(Next_url)

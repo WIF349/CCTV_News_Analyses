@@ -7,7 +7,9 @@ __mtime__ = '2019/12/20'
 '''
 版本修改：
 V 1.0:用来获取文件的链接和信息，并存储在txt文件中；
-V 1.0.1：参照调整headers
+V 1.0.1：参照调整headers，新增logging模块输入日志信息；
+V 1.0.2: 独立写文本函数，增加已采集列表统计, 修复末页bug不退出爬虫问题。
+
 '''
 
 
@@ -30,13 +32,13 @@ import logging
 
 #方法2：handler同时输出到控制台和文件
 logger = logging.getLogger()
-logger.setLevel('ERROR')
+logger.setLevel('WARNING')
 BASIC_FORMAT = "%(asctime)s:%(levelname)s:%(message)s"
 DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 formatter = logging.Formatter(BASIC_FORMAT, DATE_FORMAT)
 chlr = logging.StreamHandler() # 输出到控制台的handler
 chlr.setFormatter(formatter)
-chlr.setLevel('ERROR')  # 也可以不设置，不设置就默认用logger的level
+chlr.setLevel('INFO')  # 也可以不设置，不设置就默认用logger的level
 fhlr = logging.FileHandler('./temp/CCTV_news.log') # 输出到文件的handler
 fhlr.setFormatter(formatter)
 logger.addHandler(chlr)
@@ -82,9 +84,9 @@ def getNowUrls(url,mode=1):
     URL_all_set = set()
     URL_next_page_set = set()
     soup = BeautifulSoup(getRespose(url), 'html.parser')
-    if mode == 1 :
+    if mode == 1:
         try:
-            for line in soup.body.find(class_='xwlist').find_all(name = 'a'):
+            for line in soup.body.find(class_='xwlist').find_all(name='a'):
                 url_point = line.attrs['href']
                 logging.warning('采集列表链接：%s', url_point)
                 if url_point not in URL_all_set:
@@ -98,15 +100,18 @@ def getNowUrls(url,mode=1):
     else:
         try:
             url_next = soup.body.find(class_='page now-page').next_sibling.next_sibling.attrs['href']
-            if url_next not in URL_next_page_set:
-                URL_next_page_set.add(url_next)
+            if url_next == url:
+                URL_next_page_set.add('end')
+                logging.warning('已到末页：%s', url_next)
                 return URL_next_page_set
             else:
-                #print('链接: ' + str(url_next) + '已存在！')
-                logging.warning('链接已存在：%s',url_next)
-                return False
+                if url_next not in URL_next_page_set:
+                    URL_next_page_set.add(url_next)
+                    return URL_next_page_set
+                else:
+                    logging.warning('链接已存在：%s', url_next)
+
         except:
-            #print('获取下一页地址失败,Url_next')
             logging.error('获取下一页链接失败：%s', url)
             return False
 
@@ -115,61 +120,66 @@ def gettext(url):
     try:
         demo = getRespose(url)
         soup_text = BeautifulSoup(demo, 'html.parser')
-
         Text_title = soup_text.head.title.string
         Text_text = soup_text.body.find(attrs={'class':'text_content'}).p.string
-
-        logging.warning('新闻解析成功：%s,文本内容为%s  |  %s', url, Text_title, Text_text)
-
+        logging.warning('新闻解析成功：%s', url)
         return Text_title, Text_text
     except:
-        #print('新闻页面解析失败！')
         logging.error('新闻页面解析失败： %s',url)
         return False
 
 
-def TextWriter(url, file_path=r'.\temp', file_name=r'新闻联播.txt'):
+def TextWriter(url_title, url_text, file_path=r'.\temp', file_name=r'新闻联播.txt'):
     file_all = file_path + '\\' + file_name
-    if  gettext(url):
-        Get_text_list = gettext(url)
     if not os.path.exists(file_path):  # os库判断路径是否存在
         os.mkdir(file_path)  # 不存在创建路径
     try:
         with open(file_all, r'a+', encoding="utf8") as f:
-            f.write(Get_text_list[0] + '\n')
-            f.write(str(Get_text_list[1]) + '\n')  # 此处写入失败的原因为该文本为list格式，需要转化为str
+            f.write(url_title + '\n')
+            f.write(url_text + '\n')  # 此处写入失败的原因为该文本url_text内文本为list格式，需要转化为str
             f.flush()  # 将缓存写入
             f.close()
-            #print('文件写入成功')
-            logging.warning('文件写入成功：%s', url)
+            logging.warning('文件写入成功：%s', url_title)
+            return True
     except:
         #print('文本写入失败')
-        logging.error('文件写入失败：%s', url)
+        logging.error('文件写入失败：%s', url_title)
         return False
 
 
-
-
 def main(url):
-    URL_all = getNowUrls(url,1)
-    URL_next_page = getNowUrls(url,2)
+    URL_all = getNowUrls(url, 1)
+    URL_next_page = getNowUrls(url, 2)
+    logging.warning('采集列表：%s', URL_all)
+    logging.warning('下一页：%s', URL_next_page)
+    All_List = set()
+    All_Next_List = set()
     for url_line in list(URL_all):
         time.sleep(random.random())
-        TextWriter(url_line, file_path=r'.\temp', file_name=r'新闻联播.txt')
-        URL_all.remove(url_line)   #集合为空会报错的问题。
-        # print('采集列表:',URL_all)
-        # print('下一页:' , URL_next_page)
-        logging.warning('采集列表：%s', URL_all)
-        logging.warning('下一页：%s', URL_next_page)
+        if gettext(url_line):
+            url_title = gettext(url_line)[0]
+            url_text = str(gettext(url_line)[1])
+            #logging.warning('采集中的文本：%s  |   %s', url_title, url_text)
+            TextWriter(url_title, url_text)
+        URL_all.remove(url_line)
+        All_List.add(url_line)
+    if 'end' in URL_next_page:
+        logging.error('已到末页：%s', url_line)
+        sys.exit()
+    else:
         if len(URL_all) == 0 and len(URL_next_page) == 1:
             Next_url = list(URL_next_page)[0]
             URL_next_page.remove(Next_url)
+            All_Next_List.add(Next_url)
             time.sleep(5)
             main(Next_url)
 
 
+
+
 if __name__ == '__main__':
-    url = r'http://www.xwlb.top/xwlb.html'
+    #url = r'http://www.xwlb.top/xwlb.html'
+    url = r'http://www.xwlb.top/xwlb_709.html'
     logging.warning("输入的url为：%s", url)
     main(url)
 
