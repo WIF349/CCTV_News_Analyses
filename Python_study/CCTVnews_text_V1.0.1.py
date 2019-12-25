@@ -127,7 +127,8 @@ def gettext(url):
         demo = getRespose(url)
         soup_text = BeautifulSoup(demo, 'html.parser')
         Text_title = soup_text.head.title.string
-        Text_text = soup_text.body.find(attrs={'class': 'text_content'}).p.string
+        #Text_text = soup_text.body.find(attrs={'class': 'text_content'}).p.string
+        Text_text = str(soup_text.body.find(attrs={'class': 'text_content'}).find_all(name='p'))
         logging.warning('新闻解析成功：%s', url)
         if len(Text_title) != 0 or len(Text_text) !=0 :
             return Text_title, Text_text
@@ -176,7 +177,7 @@ def main(url):
         All_List.add(url_line)
     if 'end' in URL_next_page:
         logging.error('已到末页：%s', url_line)
-        logging.error('采集结束，共采集页面： %s', len(All_List))
+        logging.error('采集结束，共采集页面： %s ， 错误页面： %s', len(All_List), len(ERR_List))
         sys.exit()
     else:
         if len(URL_all) == 0 and len(URL_next_page) == 1:
@@ -187,10 +188,10 @@ def main(url):
 
 
 if __name__ == '__main__':
-    url = r'http://www.xwlb.top/xwlb.html'
+    #url = r'http://www.xwlb.top/xwlb.html'
     All_List = set()
     ERR_List = set()
-    #url = r'http://www.xwlb.top/xwlb_709.html'
+    url = r'http://www.xwlb.top/xwlb_709.html'
     logging.warning("输入的url为：%s", url)
     main(url)
 
