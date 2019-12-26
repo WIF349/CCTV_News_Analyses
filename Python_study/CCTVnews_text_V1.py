@@ -16,9 +16,7 @@ V 1.0.2: 独立写文本函数，增加已采集列表统计, 修复末页bug不
 #import 相关的库
 import requests
 from bs4 import BeautifulSoup
-import io
 import sys
-import re
 import os
 import time
 import random
@@ -121,17 +119,19 @@ def getNowUrls(url,mode=1):
             return False
 
 
-def gettext(url):
+def pageParsing(url):
     global ERR_List
     try:
         demo = getRespose(url)
         soup_text = BeautifulSoup(demo, 'html.parser')
-        Text_title = soup_text.head.title.string
-        #Text_text = soup_text.body.find(attrs={'class': 'text_content'}).p.string
-        Text_text = str(soup_text.body.find(attrs={'class': 'text_content'}).find_all(name='p'))
+        textTitle = soup_text.head.title.string
+        textContent = []
+        for line in soup_text.body.find(attrs={'class': 'text_content'}).find_all(name='p'):
+            textContent.append(line.string)
+            #针对多个P标签，获取对应的string内容
         logging.warning('新闻解析成功：%s', url)
-        if len(Text_title) != 0 or len(Text_text) !=0 :
-            return Text_title, Text_text
+        if len(textTitle) != 0 or len(textContent) != 0:
+            return textTitle, str(textContent)
         else:
             logging.error('标题或正文解析失败： %s', url)
     except:
@@ -140,7 +140,7 @@ def gettext(url):
         return False
 
 
-def TextWriter(url_title, url_text, file_path=r'.\temp', file_name=r'新闻联播.txt'):
+def textWrite(url_title, url_text, file_path=r'.\temp', file_name=r'新闻联播.txt'):
     file_all = file_path + '\\' + file_name
     if not os.path.exists(file_path):  # os库判断路径是否存在
         os.mkdir(file_path)  # 不存在创建路径
@@ -166,13 +166,13 @@ def main(url):
     # logging.warning('下一页：%s', URL_next_page)
     for url_line in list(URL_all):
         time.sleep(random.random())
-        Get_Text = gettext(url_line)
-        if Get_Text:
-            url_title = Get_Text[0]
-            url_text = str(Get_Text[1])
+        parseText = pageParsing(url_line)
+        if parseText:
+            url_title = parseText[0]
+            url_text = str(parseText[1])
             print(url_title,url_text)
             #logging.warning('采集中的文本：%s  |   %s', url_title, url_text)
-            TextWriter(url_title, url_text, file_path=r'.\temp', file_name=r'新闻联播.txt')
+            textWrite(url_title, url_text, file_path=r'.\temp', file_name=r'新闻联播.txt')
         URL_all.remove(url_line)
         All_List.add(url_line)
     if 'end' in URL_next_page:
@@ -194,4 +194,3 @@ if __name__ == '__main__':
     url = r'http://www.xwlb.top/xwlb_709.html'
     logging.warning("输入的url为：%s", url)
     main(url)
-
