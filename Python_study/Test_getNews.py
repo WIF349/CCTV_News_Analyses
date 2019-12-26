@@ -12,7 +12,9 @@ V 1.0.2 增加单元测试模块
 '''
 
 import unittest
+import xmlrunner
 from CCTVnews_text_V1 import *
+
 
 class Test_getNews(unittest.TestCase):
 
@@ -56,5 +58,8 @@ class Test_getNews(unittest.TestCase):
     def test_e_run(self):
         self.assertTrue(getRespose(self.url_t3))  # 测试用例
 
-if __name__ == '__main__':
-    unittest.main()
+if __name__=='__main__':
+    test_suite = unittest.TestSuite()
+    test_suite.addTest(unittest.makeSuite(Test_getNews))
+    runner = xmlrunner.XMLTestRunner(output='./temp')#指定报告放的目录
+    runner.run(test_suite)
