@@ -12,20 +12,20 @@ V 1.0.2 增加单元测试模块
 '''
 
 import unittest
-import CCTVnews_test.V1.0.1
-
+from CCTVnews_text_V1 import *
 
 class Test_getNews(unittest.TestCase):
-    url_t1=r'http://www.xwlb.top/xwlb.html'
-    url_t2=r'http://www.xwlb.top/28337.html'
-    url_t3=r'http://www.xwlb.top/xwlb_2.html'
 
+    url_t1 = r'http://www.xwlb.top/xwlb.html'
+    url_t2 = r'http://www.xwlb.top/xwlb.html'
+    url_t3 = r'http://www.xwlb.top/xwlb.html'
+    #通过类属性设置unittest的简单参数化
     def teardown(self):
         #每个测试用例执行之后做操作
         print('Test ended!')
 
     def setUp(self):
-        #么个测试用例执行之前做操作
+        #么个测试用例执行之前做操作,可以在这里用JSON设置参数化
         print('Test starting...')
 
     @classmethod
@@ -39,13 +39,22 @@ class Test_getNews(unittest.TestCase):
         print('start to test getnews!')
 
     def test_a_run(self):
-        self.assertTrue(getRespose(url_t1))  #测试用例
+        self.assertTrue(getRespose(self.url_t1)) #测试用例
 
     def test_b_run(self):
-        self.assertTrue(gettext(url_t2))  #测试用例
-
+        self.assertTrue(getNowUrls(self.url_t1, 1))  #测试用例
+    #
     def test_c_run(self):
-        self.assertTrue(gettext(url_t2))  #测试用例
-
+        self.assertTrue(getNowUrls(self.url_t1, 2))  #测试用例
+    #
     def test_c_run(self):
-        self.assertTrue(TextWriter(url_t2))  #测试用例
+        self.assertTrue(textWrite('1', '2', file_path=r'.\temp', file_name=r'text_text.txt'))  #测试用例
+    #
+    def test_d_run(self):
+        self.assertTrue(pageParsing(self.url_t2))  #测试用例
+
+    def test_e_run(self):
+        self.assertTrue(getRespose(self.url_t3))  # 测试用例
+
+if __name__ == '__main__':
+    unittest.main()
