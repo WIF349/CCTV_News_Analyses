@@ -13,6 +13,8 @@ V 1.0.2 增加单元测试模块
 
 import unittest
 import xmlrunner
+import os
+import sys
 from CCTVnews_text_V1 import *
 
 
@@ -24,7 +26,7 @@ class Test_getNews(unittest.TestCase):
     #通过类属性设置unittest的简单参数化
     def teardown(self):
         #每个测试用例执行之后做操作
-        print('Test ended!')
+        print('unittest is ended!')
 
     def setUp(self):
         #么个测试用例执行之前做操作,可以在这里用JSON设置参数化
@@ -33,6 +35,11 @@ class Test_getNews(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         #必须使用 @classmethod 装饰器，所有的test运行完之后运行一次
+        tmp_path = os.getcwd() + '/temp/'
+        os.chdir(tmp_path)
+        if os.path.isfile(r'text.tmp'):
+            os.remove(r'text.tmp')
+            print('临时文件清理!')
         print('case ended！！')
 
     @classmethod
@@ -50,7 +57,7 @@ class Test_getNews(unittest.TestCase):
         self.assertTrue(getNowUrls(self.url_t1, 2))  #测试用例
     #
     def test_c_run(self):
-        self.assertTrue(textWrite('1', '2', file_path=r'.\temp', file_name=r'text_text.txt'))  #测试用例
+        self.assertTrue(textWrite('1', '2', file_path=r'.\temp', file_name=r'text.tmp'))  #测试用例
     #
     def test_d_run(self):
         self.assertTrue(pageParsing(self.url_t2))  #测试用例
@@ -63,3 +70,4 @@ if __name__=='__main__':
     test_suite.addTest(unittest.makeSuite(Test_getNews))
     runner = xmlrunner.XMLTestRunner(output='./temp')#指定报告放的目录
     runner.run(test_suite)
+
