@@ -167,16 +167,18 @@ def main(url):
     for url_line in list(URL_all):
         time.sleep(random.random())
         parseText = pageParsing(url_line)
-        if parseText:
+        if parseText and url_line not in All_List:
             url_title = parseText[0]
             url_text = str(parseText[1])
             print(url_title,url_text)
             #logging.warning('采集中的文本：%s  |   %s', url_title, url_text)
             textWrite(url_title, url_text, file_path=r'.\temp', file_name=r'新闻联播.txt')
+        else:
+            logging.warning('！！！链接重复采集：%s', url_line)
         URL_all.remove(url_line)
         All_List.add(url_line)
     if 'end' in URL_next_page:
-        logging.error('已到末页：%s', url_line)
+        logging.error('！！！已到末页：%s', url_line)
         logging.error('采集结束，共采集页面： %s ， 错误页面： %s', len(All_List), len(ERR_List))
         sys.exit()
     else:
@@ -188,9 +190,9 @@ def main(url):
 
 
 if __name__ == '__main__':
-    #url = r'http://www.xwlb.top/xwlb.html'
+    url = r'http://www.xwlb.top/xwlb.html'
     All_List = set()
     ERR_List = set()
-    url = r'http://www.xwlb.top/xwlb_709.html'
+    #url = r'http://www.xwlb.top/xwlb_709.html'
     logging.warning("输入的url为：%s", url)
     main(url)

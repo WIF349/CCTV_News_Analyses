@@ -1,15 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-'''
-__author__ = '王益夫'
-__mtime__ = '2019/12/20'
-'''
-'''
-版本修改：
-V 1.0:用来获取文件的链接和信息，并存储在txt文件中；
-V 1.0.1：参照调整headers，新增logging模块输入日志信息；
-V 1.0.2 增加单元测试模块
-'''
 
 import unittest
 import xmlrunner
