@@ -14,7 +14,6 @@ V 1.0.2 增加单元测试模块
 import unittest
 import xmlrunner
 import os
-import sys
 from CCTVnews_text_V1 import *
 
 
@@ -35,10 +34,8 @@ class Test_getNews(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         #必须使用 @classmethod 装饰器，所有的test运行完之后运行一次
-        tmp_path = os.getcwd() + '/temp/'
-        os.chdir(tmp_path)
-        if os.path.isfile(r'text.tmp'):
-            os.remove(r'text.tmp')
+        if os.path.isfile(r'./temp/text.tmp'):
+            os.remove(r'./temp/text.tmp')
             print('临时文件清理!')
         print('case ended！！')
 
@@ -48,26 +45,30 @@ class Test_getNews(unittest.TestCase):
         print('start to test getnews!')
 
     def test_a_run(self):
-        self.assertTrue(getRespose(self.url_t1)) #测试用例
+        self.assertTrue(getRespose(self.url_t1))
+        #测试用例
 
     def test_b_run(self):
-        self.assertTrue(getNowUrls(self.url_t1, 1))  #测试用例
-    #
+        self.assertTrue(getNowUrls(self.url_t1, 1))
+
     def test_c_run(self):
-        self.assertTrue(getNowUrls(self.url_t1, 2))  #测试用例
-    #
+        self.assertTrue(getNowUrls(self.url_t1, 2))
+
     def test_c_run(self):
-        self.assertTrue(textWrite('1', '2', file_path=r'.\temp', file_name=r'text.tmp'))  #测试用例
-    #
+        self.assertTrue(textWrite('1', '2', file_path=r'.\temp', file_name=r'text.tmp'))
+
     def test_d_run(self):
-        self.assertTrue(pageParsing(self.url_t2))  #测试用例
+        self.assertTrue(pageParsing(self.url_t2))
 
     def test_e_run(self):
-        self.assertTrue(getRespose(self.url_t3))  # 测试用例
+        self.assertTrue(getRespose(self.url_t3))
 
 if __name__=='__main__':
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(Test_getNews))
-    runner = xmlrunner.XMLTestRunner(output='./temp')#指定报告放的目录
+    #使用makeSuite方法添加所有的测试方法
+    #test_suite.addTest(Test_getNews('test_e_run'))
+    # 测试套件中添加测试用例
+    runner = xmlrunner.XMLTestRunner(output='report-xml')
+    #指定报告放的目录
     runner.run(test_suite)
-
