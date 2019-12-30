@@ -9,9 +9,12 @@ __mtime__ = '2019/12/20'
 V 1.0:get代码获取的文本内容，通过jieba库和词云进行分析
 '''
 import jieba
-import wordcloud
+from wordcloud import WordCloud
 from os import path
 import re
+import matplotlib.pyplot as plt
+#from scipy.misc import imread
+import imageio
 
 
 def jiebaclearText(text):
@@ -90,9 +93,28 @@ if __name__ == '__main__':
                 jieba.add_word(line)
 
     text_text = jiebaclearText(text)
-    print(text_text)
 
-
+    color_mask = imageio.imread(file_path + "/1.png")
+    cloud = WordCloud(
+        # 设置字体，不指定就会出现乱码
+        font_path="HYQiHei-25J.ttf",
+        # font_path=path.join(d,'simsun.ttc'),
+        # 设置背景色
+        background_color='white',
+        # 词云形状
+        mask=color_mask,
+        # 允许最大词汇
+        max_words=200,
+        # 最大号字体
+        max_font_size=40
+    )
+#    wordcloud = WordCloud(background_color="white", width=1000, height=860, margin=2).generate(text_text)
+    word_cloud = cloud.generate(text_text)  # 产生词云
+    word_cloud.to_file("test.jpg")  # 保存图片
+    #  显示词云图片
+    plt.imshow(word_cloud)
+    plt.axis('off')
+    plt.show()
 
 
 
