@@ -177,7 +177,12 @@ def main(url):
             logging.warning('！！！链接重复采集：%s', url_line)
         URL_all.remove(url_line)
         All_List.add(url_line)
-    if 'end' in URL_next_page:
+    #增加判断文件大小的逻辑（注意log日志文件也很大）
+    size_text = os.path.getsize('./temp/新闻联播.txt')
+    size_log = os.path.getsize('./temp/CCTV_news.log')
+
+
+    if 'end' in URL_next_page or size_text/1024/1024/1024 > 10 or size_log/1024/1024/1024 > 10 :
         logging.error('！！！已到末页：%s', url_line)
         logging.error('采集结束，共采集页面： %s ， 错误页面： %s', len(All_List), len(ERR_List))
         sys.exit()
