@@ -71,7 +71,7 @@ def StopWordsRulls(text):
             for line in list(Stopwords_list):
                 file_Stop.write(line + '\n')
 
-if __name__ == '__main__':
+def main():
     file_path = path.dirname(__file__) + r'/temp'
     file_name1 = r'新闻联播.txt'
     file_name2 = r'StopWords.txt'
@@ -97,7 +97,7 @@ if __name__ == '__main__':
     color_mask = imageio.imread(file_path + "/1.png")
     cloud = WordCloud(
         # 设置字体，不指定就会出现乱码
-        font_path="HYQiHei-25J.ttf",
+        font_path="./temp/HYQiHei-25J.ttf",
         # font_path=path.join(d,'simsun.ttc'),
         # 设置背景色
         background_color='white',
@@ -116,7 +116,8 @@ if __name__ == '__main__':
     plt.axis('off')
     plt.show()
 
-
+if __name__ == '__main__':
+    main()
 
 
 

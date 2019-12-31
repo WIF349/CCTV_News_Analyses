@@ -14,7 +14,7 @@ V 1.0.2 增加单元测试模块
 import unittest
 import xmlrunner
 import os
-from CCTVnews_text_V1 import *
+from CCTVnewsGetText_V1 import *
 
 
 class Test_getNews(unittest.TestCase):
