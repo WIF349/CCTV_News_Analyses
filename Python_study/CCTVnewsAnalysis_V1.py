@@ -16,6 +16,16 @@ import matplotlib.pyplot as plt
 #from scipy.misc import imread
 import imageio
 
+file_path = path.dirname(__file__) + r'/temp'
+file_name1 = r'新闻联播.txt'
+file_name2 = r'StopWords.txt'
+file_name3 = r'AddWords.txt'
+
+TextPath = file_path + '/' + file_name1
+StopWordsPath = file_path + '/' + file_name2
+AddWordsPath = file_path + '/' + file_name3
+print(AddWordsPath)
+
 
 def jiebaclearText(text):
     mywordslist = []
@@ -72,14 +82,7 @@ def StopWordsRulls(text):
                 file_Stop.write(line + '\n')
 
 def main():
-    file_path = path.dirname(__file__) + r'/temp'
-    file_name1 = r'新闻联播.txt'
-    file_name2 = r'StopWords.txt'
-    file_name3 = r'AddWords.txt'
 
-    TextPath = file_path + '/' + file_name1
-    StopWordsPath = file_path + '/' + file_name2
-    AddWordsPath = file_path + '/' + file_name3
 
     with open(TextPath, encoding='utf-8', errors='ignore') as file_Text:
         text = file_Text.read()
@@ -94,7 +97,7 @@ def main():
 
     text_text = jiebaclearText(text)
 
-    color_mask = imageio.imread(file_path + "/1.png")
+    color_mask = imageio.imread(file_path + "/template.jpeg")
     cloud = WordCloud(
         # 设置字体，不指定就会出现乱码
         font_path="./temp/HYQiHei-25J.ttf",
